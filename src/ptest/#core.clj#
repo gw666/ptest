@@ -160,8 +160,8 @@
 
 	title-height (.getHeight title-box)
 	]
-    (set-paint! title-box 255 255 240)
-    (set-paint! body-box 255 255 240)
+    (set-paint! title-box 255 255 240 0)
+    (set-paint! body-box 255 255 240 0)
     (.translate body-box 0 (- title-height 1))
     (add! title-box body-box)
     title-box
