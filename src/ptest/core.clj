@@ -98,6 +98,7 @@
 (defn text-box
   ""
   [box-x box-y box-width box-height ;position, size of box
+   r g b   a ;red, green, blue, alpha values (all 0-255) for card color
    ;text to put inside; font name, size; width to wrap to
    text-str font-name font-size wrap-width
    offset-x offset-y] ;small-increment offsets of text relative to box
@@ -110,34 +111,44 @@
 	text-height (.getHeight scratch-text)
 	offset-incr (/ text-height 10.0)
 	wrapped-text
-	(wrap-text text-str font-name font-size box-x box-y wrap-width)]
+	  (wrap-text text-str font-name font-size box-x box-y wrap-width)]
  ;   (swank.core/break)
     (.setPathToRectangle clipping-rect
 			 box-x box-y
 			 box-width box-height)
 			 
     (.setOffset wrapped-text (* offset-x 4) (* offset-y 2))
+    (set-paint! clipping-rect r g b a)
+    
     (add! clipping-rect wrapped-text)
 
     clipping-rect))
 
 (defn one-line-box
   ""
-  [box-x box-y box-width box-height
+  [box-x box-y box-width box-height ;position, size of box
+   r g b   a ;red, green, blue, alpha values (all 0-255) for card color
+   ;text to put inside; font name, size; width to wrap to
    text-str font-name font-size wrap-width
-   offset-x offset-y]
+   offset-x offset-y] ;small-increment offsets of text relative to box
   (prn "one-line-box")
 ;  (swank.core/break)
 
   (let [box (rectangle box-x box-y box-width box-height)
 	my-text (text text-str)
 	ignored-value (set-font! my-text font-name :plain font-size)
+	text-width (.getWidth my-text)
 	text-height (.getHeight my-text)
 	offset-incr (/ text-height 10.0)]
+
+    (if (> text-width box-width)
+      START HERE
     
     (.setOffset my-text (+ (* offset-x 4) box-x)
 		(+ (* offset-y 1.4) box-y))
+    (set-paint! box r g b   a)
     (add! box my-text)
+;  (swank.core/break)
     box))
     
 (defn proto-card
@@ -151,17 +162,17 @@
   (let [tenth (/ font-size 10.0)
 	body-box (text-box
 		  box-x box-y box-width box-height
+		  255 255 240   255
 		  body-text "Monospaced" font-size  (- box-width 20)
 		  tenth tenth)
 	title-box (one-line-box
 		   box-x box-y  box-width (* tenth 12)
+		   255 255 240   255
 		   title-text "Monospaced" font-size  box-width
 		   tenth tenth)
 
 	title-height (.getHeight title-box)
 	]
-    (set-paint! title-box 255 255 240)
-    (set-paint! body-box 255 255 240)
     (.translate body-box 0 (- title-height 1))
     (add! title-box body-box)
     title-box
@@ -174,10 +185,13 @@
 	     "Calming the mind becomes necessary" txt
 	     box-x box-y box-width box-height
 	     font-size)]
+    (prn "test-card")
 ;    (swank.core/break)
-    (add! the-PFrame card)
+    (add! layer1 card)
+;    (prn "test-card 2")
+;    (swank.core/break)
     (Thread/sleep (* seconds 1000))
-    (remove! the-PFrame card)))
+    (remove! layer1 card)))
 
 (defn test []
   (test-card layer1   0 0  270 124   12   10)
