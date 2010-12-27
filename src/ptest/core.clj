@@ -70,7 +70,14 @@
 (def frame1 (PFrame.))
 (.setVisible frame1 true)
 
-(def layer1 (.. frame1 getCanvas getLayer))
+;installs drag-PNode handler onto left-mouse button
+(def canvas1 (.getCanvas frame1))
+(.setPanEventHandler canvas1 nil)
+(.addInputEventListener canvas1 (PDragEventHandler.))
+
+(def layer1 (.getLayer canvas1))
+
+
 
 (def txt (str "We are at our least effective when we act in reaction to "
              "whatever was the most recent thought in our head. When the "
@@ -140,9 +147,6 @@
 	text-width (.getWidth my-text)
 	text-height (.getHeight my-text)
 	offset-incr (/ text-height 10.0)]
-
-    (if (> text-width box-width)
-      START HERE
     
     (.setOffset my-text (+ (* offset-x 4) box-x)
 		(+ (* offset-y 1.4) box-y))
@@ -167,7 +171,7 @@
 		  tenth tenth)
 	title-box (one-line-box
 		   box-x box-y  box-width (* tenth 12)
-		   255 255 240   255
+		   220 220 220   128
 		   title-text "Monospaced" font-size  box-width
 		   tenth tenth)
 
@@ -175,6 +179,7 @@
 	]
     (.translate body-box 0 (- title-height 1))
     (add! title-box body-box)
+    (.setChildrenPickable title-box false)
     title-box
     ))
 
@@ -190,8 +195,9 @@
     (add! layer1 card)
 ;    (prn "test-card 2")
 ;    (swank.core/break)
-    (Thread/sleep (* seconds 1000))
-    (remove! layer1 card)))
+;    (Thread/sleep (* seconds 1000))
+;    (remove! layer1 card)
+    ))
 
 (defn test []
   (test-card layer1   0 0  270 124   12   10)
