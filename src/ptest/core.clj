@@ -73,11 +73,6 @@
 ;installs drag-PNode handler onto left-mouse button
 (def canvas1 (.getCanvas frame1))
 (.setPanEventHandler canvas1 nil)
-
-; TO GET CLICKED CARD TO MOVE TO TOP, must call .moveToFront
-; on card; requires creating a custom event handler that does
-; this, then calls PDragEventHandler.  gw 1/2/11
-
 (.addInputEventListener canvas1 (PDragEventHandler.))
 
 (def layer1 (.getLayer canvas1))
@@ -203,8 +198,6 @@
 ;    (Thread/sleep (* seconds 1000))
 ;    (remove! layer1 card)
     ))
-
-
 
 (defn test []
   (test-card layer1   0 0  270 124   12   10)
