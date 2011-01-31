@@ -1,7 +1,7 @@
 ; file: core.clj (part of tech\cljprojects\ptest)
-; last changed: 11/27/10
+; last changed: 1/30/11
 
-; HISTORY:
+; HISTORY: 
 
 ; v1.21: Converted program to be executable NOT WORKING YET--GW
 ; v1.2: At the moment, this is not a workspace--it is a bin of Clojure
@@ -34,6 +34,12 @@
 ; on card; requires creating a custom event handler that does
 ; this, then calls PDragEventHandler.  gw 1/2/11
 
+(def txt (str "We are at our least effective when we act in reaction to "
+             "whatever was the most recent thought in our head. When the "
+             "brain is very active, it spins from idea to idea with little "
+             "sense of connection between the two. Calming the mind becomes "
+             "necessary before we can hope to have any sense of mastery "
+             "over how we spend our time."))
 
 (defn wrap-text
   "Return PText containing given text, font, font-size, x/y position, & width to wrap to"
@@ -43,14 +49,14 @@
   ; another wrap-text; remove! it, re-def it, then add! it again
   ;
   (prn "at start of wrap-text")
-  (swank.core/break)
+;  (swank.core/break)
   (let [wrapped-text (text)  ;empty at first
 	height 0]   ;value used does not seem to matter
-    (. wrapped-text setConstrainWidthToTextWidth false)
+    (.setConstrainWidthToTextWidth wrapped-text false)
     (set-text! wrapped-text text-str)
     ;doesn't work unless *some* text exists
     (set-font! wrapped-text font-name :plain font-size)
-    (. wrapped-text setBounds x y wrap-width height)
+    (.setBounds wrapped-text x y wrap-width height)
     wrapped-text))
 
 (defn text-box
@@ -131,39 +137,33 @@
     title-box
     ))
 
-(defn test-card [the-PFrame box-x box-y box-width box-height font-size seconds]
-  ;WARNING: txt, layer1 are global variables!!!
+(defn test-card [the-PFrame box-x box-y box-width box-height font-size seconds text-str]
+  ;added text-str parameter (above)
     (prn "test-card")
   (let [card (proto-card	      
-	     "Calming the mind becomes necessary" txt
+	     "Calming the mind becomes necessary" text-str
 	     box-x box-y box-width box-height
 	     font-size)]
     (prn "test-card")
-    (add! layer1 card)
-    ))
+    ; replaced 'layer1' with 'the-PFrame'
+    (add! the-PFrame card)))
 
 
 
 (defn testme [layer1]
-  (test-card layer1   0 0  270 124   12   10)
-  (test-card layer1   200 200  270 124   12   10)
+  (test-card layer1   0 0  270 124   12   10 txt)
+  (test-card layer1   200 200  270 124   12   10 txt)
   )
 
 
 (defn -main []
   (let [frame1 (PFrame.)
 	canvas1 (.getCanvas frame1)
-	layer1 (.getLayer canvas1)
-	txt (str "We are at our least effective when we act in reaction to "
-             "whatever was the most recent thought in our head. When the "
-             "brain is very active, it spins from idea to idea with little "
-             "sense of connection between the two. Calming the mind becomes "
-             "necessary before we can hope to have any sense of mastery "
-             "over how we spend our time.")]
+	layer1 (.getLayer canvas1)]
     (.setVisible frame1 true)
 
     ;installs drag-PNode handler onto left-mouse button
     (.setPanEventHandler canvas1 nil)
     (.addInputEventListener canvas1 (PDragEventHandler.))
-(swank.core/break)
+;(swank.core/break)
     (testme layer1)))
