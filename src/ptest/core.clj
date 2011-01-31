@@ -34,12 +34,7 @@
 ; on card; requires creating a custom event handler that does
 ; this, then calls PDragEventHandler.  gw 1/2/11
 
-(def txt (str "We are at our least effective when we act in reaction to "
-             "whatever was the most recent thought in our head. When the "
-             "brain is very active, it spins from idea to idea with little "
-             "sense of connection between the two. Calming the mind becomes "
-             "necessary before we can hope to have any sense of mastery "
-             "over how we spend our time."))
+(declare txt)
 
 (defn wrap-text
   "Return PText containing given text, font, font-size, x/y position, & width to wrap to"
@@ -159,11 +154,17 @@
 (defn -main []
   (let [frame1 (PFrame.)
 	canvas1 (.getCanvas frame1)
+	txt  (str "We are at our least effective when we act in reaction to "
+		  "whatever was the most recent thought in our head. When the "
+		  "brain is very active, it spins from idea to idea with little "
+		  "sense of connection between the two. Calming the mind becomes "
+		  "necessary before we can hope to have any sense of mastery "
+		  "over how we spend our time.")
 	layer1 (.getLayer canvas1)]
     (.setVisible frame1 true)
 
     ;installs drag-PNode handler onto left-mouse button
     (.setPanEventHandler canvas1 nil)
     (.addInputEventListener canvas1 (PDragEventHandler.))
-;(swank.core/break)
+					;(swank.core/break)
     (testme layer1)))
