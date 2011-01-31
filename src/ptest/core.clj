@@ -1,8 +1,9 @@
 ; file: core.clj (part of tech\cljprojects\ptest)
-; last changed: 11/27/10
+; last changed: 1/30/11
 
-; HISTORY:
+; HISTORY: 
 
+; v1.21: Converted program to be executable NOT WORKING YET--GW
 ; v1.2: At the moment, this is not a workspace--it is a bin of Clojure
 ;   code that gets executed interactively as I play with my global
 ;   variables, add new functions, and tweak existing ones. I've wiped
@@ -14,44 +15,6 @@
 ;   onscreen and enable the user to move it around on the Piccolo desktop.
 
 
-(def frame1 (PFrame.))
-(.setVisible frame1 true)
-
-(def layer1 (.. frame1 getCanvas getLayer))
-
-(def title1
-     (let [title-text (text "Slow down your day")
-	   title-text-bounds (.getGlobalBounds title-text)]
-       (.inset title-text-bounds -14 -14)  ; give it some border space
-       (let [title-border (PPath. title-text-bounds)]
-	 (add! title-border title-text)
-	 title-border)))
-
-(add! layer1 title1)
-
-(println "*Local* coords of title1 are " (.getX title1) (.getY title1))
-; *Local* coords of title1 are  100.0 50.0
-
-; don't use this; ;use translate or setOffset
-(.animateToPositionScaleRotation title1 100 50 1 0 0)
-
-;(println "After (.aTPSRXOffset 100 50), XOffset and YOffset of title1 are " (.getXOffset title1) (.getYOffset title1))
-; After (.aTPSRXOffset 100 50), XOffset and YOffset of title1 are  100.0 50.0
-
-;(println (.getGlobalBounds title1))
-
-(def body1 (text))
-(. body1 setConstrainWidthToTextWidth false)
-(. body1 setText )
-(. body1 setBounds 50.0 50.0 400.0 800.0)
-(add! layer1 body1)
-(remove! layer1 title1)
-
-; ============================================================
-; a more general solution
-; ============================================================
-
-(ns ptest.core)
 
 (ns ptest.core
   (:gen-class)
@@ -67,17 +30,9 @@
     (java.awt   BasicStroke Font GraphicsEnvironment Rectangle))
   (:use clj-piccolo2d.core))
 
-(def frame1 (PFrame.))
-(.setVisible frame1 true)
-
-;installs drag-PNode handler onto left-mouse button
-(def canvas1 (.getCanvas frame1))
-(.setPanEventHandler canvas1 nil)
-(.addInputEventListener canvas1 (PDragEventHandler.))
-
-(def layer1 (.getLayer canvas1))
-
-
+; TO GET CLICKED CARD TO MOVE TO TOP, must call .moveToFront
+; on card; requires creating a custom event handler that does
+; this, then calls PDragEventHandler.  gw 1/2/11
 
 (def txt (str "We are at our least effective when we act in reaction to "
              "whatever was the most recent thought in our head. When the "
@@ -93,13 +48,15 @@
   ; text obj can't be remove!'d if you attempt to re-def it using
   ; another wrap-text; remove! it, re-def it, then add! it again
   ;
+  (prn "at start of wrap-text")
+  (swank.core/break)
   (let [wrapped-text (text)  ;empty at first
 	height 0]   ;value used does not seem to matter
-    (. wrapped-text setConstrainWidthToTextWidth false)
+    (.setConstrainWidthToTextWidth wrapped-text false)
     (set-text! wrapped-text text-str)
     ;doesn't work unless *some* text exists
     (set-font! wrapped-text font-name :plain font-size)
-    (. wrapped-text setBounds x y wrap-width height)
+    (.setBounds wrapped-text x y wrap-width height)
     wrapped-text))
 
 (defn text-box
@@ -119,7 +76,7 @@
 	offset-incr (/ text-height 10.0)
 	wrapped-text
 	  (wrap-text text-str font-name font-size box-x box-y wrap-width)]
- ;   (swank.core/break)
+;    (swank.core/break)
     (.setPathToRectangle clipping-rect
 			 box-x box-y
 			 box-width box-height)
@@ -139,7 +96,6 @@
    text-str font-name font-size wrap-width
    offset-x offset-y] ;small-increment offsets of text relative to box
   (prn "one-line-box")
-;  (swank.core/break)
 
   (let [box (rectangle box-x box-y box-width box-height)
 	my-text (text text-str)
@@ -152,7 +108,6 @@
 		(+ (* offset-y 1.4) box-y))
     (set-paint! box r g b   a)
     (add! box my-text)
-;  (swank.core/break)
     box))
     
 (defn proto-card
@@ -161,7 +116,6 @@
      box-x box-y box-width box-height ;x/y position, size of body
      font-size] ;size of font--font type is fixed
     (prn "proto-card")
-;    (swank.core/break)
 
   (let [tenth (/ font-size 10.0)
 	body-box (text-box
@@ -183,23 +137,34 @@
     title-box
     ))
 
-(defn test-card [the-PFrame box-x box-y box-width box-height font-size seconds]
+(defn test-card [the-PFrame box-x box-y box-width box-height font-size seconds text-str]
+  ;added text-str parameter (above)
     (prn "test-card")
-;    (swank.core/break)
   (let [card (proto-card	      
-	     "Calming the mind becomes necessary" txt
+	     "Calming the mind becomes necessary" text-str
 	     box-x box-y box-width box-height
 	     font-size)]
     (prn "test-card")
-;    (swank.core/break)
-    (add! layer1 card)
-;    (prn "test-card 2")
-;    (swank.core/break)
-;    (Thread/sleep (* seconds 1000))
-;    (remove! layer1 card)
+    ; replaced 'layer1' with 'the-PFrame'
+    (add! the-PFrame card)
     ))
 
-(defn test []
-  (test-card layer1   0 0  270 124   12   10)
-  (test-card layer1   200 200  270 124   12   10)
+
+
+(defn testme [layer1]
+  (test-card layer1   0 0  270 124   12   10 txt)
+  (test-card layer1   200 200  270 124   12   10 txt)
   )
+
+
+(defn -main []
+  (let [frame1 (PFrame.)
+	canvas1 (.getCanvas frame1)
+	layer1 (.getLayer canvas1)]
+    (.setVisible frame1 true)
+
+    ;installs drag-PNode handler onto left-mouse button
+    (.setPanEventHandler canvas1 nil)
+    (.addInputEventListener canvas1 (PDragEventHandler.))
+(swank.core/break)
+    (testme layer1)))
