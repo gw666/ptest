@@ -1,9 +1,12 @@
 ; file: core.clj (part of tech\cljprojects\ptest)
-; last changed: 1/30/11
+; last changed: 2/2/11
 
 ; HISTORY: 
 
-; v1.21: Converted program to be executable NOT WORKING YET--GW
+; v1.21: Converted program to be executable; first run slime (from 
+; ptest home dir, run 'lein swank'; then run (ns ptest.core), then
+; (load-file "src/ptest/core.clj")
+; 
 ; v1.2: At the moment, this is not a workspace--it is a bin of Clojure
 ;   code that gets executed interactively as I play with my global
 ;   variables, add new functions, and tweak existing ones. I've wiped
@@ -30,14 +33,15 @@
     (java.awt   BasicStroke Font GraphicsEnvironment Rectangle))
   (:use clj-piccolo2d.core))
 
-; TO GET CLICKED CARD TO MOVE TO TOP, must call .moveToFront
+; TO GET CLICKED CARD TO MOVE TO TOP, must (?) call .moveToFront
 ; on card; requires creating a custom event handler that does
 ; this, then calls PDragEventHandler.  gw 1/2/11
 
-(declare txt)
+(declare txt) ;because txt used (in testme) before it's defined (in -main)
 
 (defn wrap-text
-  "Return PText containing given text, font, font-size, x/y position, & width to wrap to"
+  "Return PText containing given text, font, font-size, x/y position,
+ & width to wrap to"
   [text-str font-name font-size x y wrap-width]
   ;
   ; text obj can't be remove!'d if you attempt to re-def it using
