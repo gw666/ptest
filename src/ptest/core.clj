@@ -37,7 +37,7 @@
 ; on card; requires creating a custom event handler that does
 ; this, then calls PDragEventHandler.  gw 1/2/11
 
-(declare txt) ;because txt used (in testme) before it's defined (in -main)
+(declare txt)
 
 (defn wrap-text
   "Return PText containing given text, font, font-size, x/y position,
@@ -66,7 +66,7 @@
    text-str font-name font-size wrap-width
    offset-x offset-y] ;small-increment offsets of text relative to box
   (prn "text-box")
-;  (swank.core/break)
+  ;(swank.core/break)
 					
   (let [clipping-rect (PClip.)
 	scratch-text (text "just for testing")
@@ -75,7 +75,7 @@
 	offset-incr (/ text-height 10.0)
 	wrapped-text
 	  (wrap-text text-str font-name font-size box-x box-y wrap-width)]
-;    (swank.core/break)
+    ;(swank.core/break)
     (.setPathToRectangle clipping-rect
 			 box-x box-y
 			 box-width box-height)
@@ -149,7 +149,7 @@
 
 
 
-(defn testme [layer1]
+(defn testme [layer1 txt]
   (test-card layer1   0 0  270 124   12   10 txt)
   (test-card layer1   200 200  270 124   12   10 txt)
   )
@@ -164,11 +164,13 @@
 		  "sense of connection between the two. Calming the mind becomes "
 		  "necessary before we can hope to have any sense of mastery "
 		  "over how we spend our time.")
-	layer1 (.getLayer canvas1)]
+	layer1 (.getLayer canvas1)
+	dragger (PDragEventHandler.)]
     (.setVisible frame1 true)
+    (.setMoveToFrontOnPress dragger true)
 
     ;installs drag-PNode handler onto left-mouse button
     (.setPanEventHandler canvas1 nil)
-    (.addInputEventListener canvas1 (PDragEventHandler.))
-					;(swank.core/break)
-    (testme layer1)))
+    (.addInputEventListener canvas1 dragger)
+    ;(swank.core/break)
+    (testme layer1 txt)))
