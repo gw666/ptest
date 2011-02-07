@@ -3,9 +3,13 @@
 
 ; HISTORY: 
 
+; v1.3: New project, simplifying the code for creating an infocard;
+;   On github, project ptest, branch simplified.
+;
 ; v1.21: Converted program to be executable; first run slime (from 
-; ptest home dir, run 'lein swank'; then run (ns ptest.core), then
-; (load-file "src/ptest/core.clj")
+;   ptest home dir, run 'lein swank'; then run (ns ptest.core), then
+;   (load-file "src/ptest/core.clj") see git ptest project, tag
+;   v0.0.1 in MASTER branch
 ; 
 ; v1.2: At the moment, this is not a workspace--it is a bin of Clojure
 ;   code that gets executed interactively as I play with my global
@@ -17,6 +21,43 @@
 ; v1.0: This is an early working version of a project to put one infocard
 ;   onscreen and enable the user to move it around on the Piccolo desktop.
 
+
+(comment
+  ; remember to execute (ns ... ) first
+  
+  (def frame1 (PFrame.))
+  (.setVisible frame1 true)
+  (def canvas1 (.getCanvas frame1))
+  (def layer1 (.getLayer canvas1))
+
+  ; NO LONGER USING clj-piccolo2d LIBRARY 2/5/11 gw
+  
+  ;(def rect (rectangle 50 20 270 150))
+  (def rect (PPath.))
+  (def rect (.setPathToRectangle rect 50 20 270 150)) ; ??? need def again?
+  (.setPaint rect (color 200 100 255 255))
+  ;(set-paint! rect 200 100 255 255)
+  (def small (text "Wakka!"))
+  (.translate small 52 22)
+  (add! rect small)
+  (add! layer1 rect)
+
+
+
+
+  (def clipping-rect (PClip.))
+  (def small2 (PText. "Woo! This text is much longer and will go outside box"))
+  (.translate small2 52 102)
+  (.setPathToRectangle clipping-rect 50 100 270 150)
+  (.setPaint clipping-rect (color 200 200 255 255))
+  (.addChild clipping-rect small2)
+  (.addChild layer1 clipping-rect)
+
+  (.removeChild layer1 clipping-rect) ;use to start over
+  (.removeChild layer1 rect) ;use to start over
+
+  
+  )
 
 
 (ns ptest.core
@@ -39,96 +80,51 @@
 
 (declare txt)
 
-(defn wrap-text
+(defn wrap
   "Return PText containing given text, font, font-size, x/y position,
  & width to wrap to"
-  [text-str font-name font-size x y wrap-width]
+  [text-str font-size x y wrap-width]
   ;
   ; text obj can't be remove!'d if you attempt to re-def it using
-  ; another wrap-text; remove! it, re-def it, then add! it again
+  ; another wrap-text; you must remove! it, re-def it, then add! it again
   ;
   (prn "at start of wrap-text")
 ;  (swank.core/break)
-  (let [wrapped-text (text)  ;empty at first
+  (let [_font-name_ "Monospaced"
+	wrapped-text (text)  ;empty at first
 	height 0]   ;value used does not seem to matter
     (.setConstrainWidthToTextWidth wrapped-text false)
     (set-text! wrapped-text text-str)
     ;doesn't work unless *some* text exists
-    (set-font! wrapped-text font-name :plain font-size)
+    (set-font! wrapped-text _font-name_ :plain font-size)
     (.setBounds wrapped-text x y wrap-width height)
     wrapped-text))
 
-(defn text-box
+(defn clip-box
   ""
   [box-x box-y box-width box-height ;position, size of box
-   r g b   a ;red, green, blue, alpha values (all 0-255) for card color
-   ;text to put inside; font name, size; width to wrap to
-   text-str font-name font-size wrap-width
-   offset-x offset-y] ;small-increment offsets of text relative to box
+   r g b   a] ;red, green, blue, alpha values (all 0-255) for card bkgd color
   (prn "text-box")
   ;(swank.core/break)
 					
-  (let [clipping-rect (PClip.)
-	scratch-text (text "just for testing")
-	ignored-value (set-font! scratch-text font-name :plain font-size)
-	text-height (.getHeight scratch-text)
-	offset-incr (/ text-height 10.0)
-	wrapped-text
-	  (wrap-text text-str font-name font-size box-x box-y wrap-width)]
+  (let [clipping-rect (PClip.)]
     ;(swank.core/break)
     (.setPathToRectangle clipping-rect
 			 box-x box-y
 			 box-width box-height)
 			 
-    (.setOffset wrapped-text (* offset-x 4) (* offset-y 2))
     (set-paint! clipping-rect r g b a)
-    
-    (add! clipping-rect wrapped-text)
-
     clipping-rect))
-
-(defn one-line-box
-  ""
-  [box-x box-y box-width box-height ;position, size of box
-   r g b   a ;red, green, blue, alpha values (all 0-255) for card color
-   ;text to put inside; font name, size; width to wrap to
-   text-str font-name font-size wrap-width
-   offset-x offset-y] ;small-increment offsets of text relative to box
-  (prn "one-line-box")
-
-  (let [box (rectangle box-x box-y box-width box-height)
-	my-text (text text-str)
-	ignored-value (set-font! my-text font-name :plain font-size)
-	text-width (.getWidth my-text)
-	text-height (.getHeight my-text)
-	offset-incr (/ text-height 10.0)]
-    
-    (.setOffset my-text (+ (* offset-x 4) box-x)
-		(+ (* offset-y 1.4) box-y))
-    (set-paint! box r g b   a)
-    (add! box my-text)
-    box))
     
 (defn proto-card
     ""
-    [title-text body-text ;text for title, body of card
-     box-x box-y box-width box-height ;x/y position, size of body
-     font-size] ;size of font--font type is fixed
-    (prn "proto-card")
+    [clipping-box title-text body-text]
+    ;a PClip representing entire card, text for title, body of card
 
-  (let [tenth (/ font-size 10.0)
-	body-box (text-box
-		  box-x box-y box-width box-height
-		  255 255 240   255
-		  body-text "Monospaced" font-size  (- box-width 20)
-		  tenth tenth)
-	title-box (one-line-box
-		   box-x box-y  box-width (* tenth 12)
-		   220 220 220   128
-		   title-text "Monospaced" font-size  box-width
-		   tenth tenth)
-
-	title-height (.getHeight title-box)
+    (let [_font-size_  12
+	  tenth      (/ _font-size_ 10.0)
+	  wrapped-body-text
+	    (wrap body-text "Monospaced"
 	]
     (.translate body-box 0 (- title-height 1))
     (add! title-box body-box)
