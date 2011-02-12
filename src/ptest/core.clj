@@ -53,7 +53,8 @@
 
   (def cr (PClip.))
   (.setVisible cr true)
-  (def tx (PText. "Woo! This text is much longer and will go outside box"))
+  (def bt "Woo! This text is much longer and will go outside box")
+  (def tx (PText. bt))
   (def t2 "Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Bye!")
   (.translate tx 52 102)
   (.setPathToRectangle cr 50 100 270 150)
@@ -69,7 +70,7 @@
   (.removeChild cr tx) ;use to start over
   (.removeChild cr wt2) ;use to start over
 
-  ; experiment 1
+  ; experiment 1, 110211
   (def cr (PClip.))
   (def tx (PText. "Woo! This text is much longer and will go outside box"))
   (.translate tx 52 102)
@@ -86,7 +87,7 @@
   ;result: cr disappears immediately, even though window is not active win.
 
 
-  ; experiment 2
+  ; experiment 2, 110211
   (def cr (PClip.))
   (def tx (PText. "Woo! This text is much longer and will go outside box"))
   (.setPathToRectangle cr 50 100 270 150)
@@ -99,8 +100,30 @@
 
 ;result: nothing happens until window is selected, then tx appears after
 ;about *10* seconds--yikes!; but tx is in the "wrong" place, at 52 102
-  ;relative to cr, not relative to window
-  
+;relative to cr, not relative to window
+
+  ;experiment 3, 110211
+  (def wt2 (wrap t2 12 52 116 245))
+  (.addChild cr wt2)
+
+  ;result: ditto exp. 1 (wt2 = wrapped text #2)
+
+  (.removeChild cr wt2) ;use to start over
+
+;result: text disappears immediately, even though win. is not active!
+
+;result: tx is in a "default* proportional font, while wt2 appears in the
+;"Monospaced" font specified in the definition of 'wrap' fcn. Font chosen
+;as the default seems to be the Java logical "Sans-serif" font.
+
+  ;more interactive code
+  (def card (clip-box 50 100 270 150 bt t2))
+  (.addChild layer1 card)
+  (def card2 (clip-box 100 150 270 150 bt t2))
+  (.addChild layer1 card2)
+
+  (.removeChild layer1 card)
+  (.removeChild layer1 card2)
   )
 
 
@@ -122,39 +145,44 @@
 (declare txt)
 
 (defn wrap
-  "Return PText containing given text, font-size, x/y position,
- & width to wrap to"
-  [text-str font-size x y wrap-width]
+  "Return PText containing given text & width to wrap to"
+  [text-str wrap-width]
   ;
   ; during debugging:
   ; text obj can't be remove!'d if you attempt to re-def it using
   ;  wrap again; you must remove! it, re-def it, then add! it again
   ;
-  (prn "at start of wrap-text")
+  (prn "at start of new wrap-text")
 ;  (swank.core/break)
   
-  (let [_font-name_ "Monospaced" 
-	wrapped-text (PText.)  ;empty at first
-	height 0]   ;value used does not seem to matter
+  (let [wrapped-text (PText.)]
     (.setConstrainWidthToTextWidth wrapped-text false)
     (.setText wrapped-text text-str)
-    ;doesn't work unless *some* text exists
-    (.setFont wrapped-text (Font. _font-name_ Font/PLAIN (Integer. font-size)))
-    (.setBounds wrapped-text x y wrap-width height)
+    (.setBounds wrapped-text 0 0 wrap-width 100)
     wrapped-text))
 
-(defn clip-box
-  ""
-  [box-x box-y box-width box-height] ;position, size of box
+(defn infocard0
+  "Create basic infocard (ready to be added as the child of a layer)"
+  [box-x box-y box-width box-height title-text body-text] ;position, size of box
   (prn "clip-box")
 
-  (let [cr (PClip.)]
-    ;(swank.core/break)
-    (.setPathToRectangle cr
+  (let [cbox (PClip.)
+	title (PText. title-text)
+	indent-x 3
+	indent-y 3
+	body (wrap body-text box-width)
+	line-height 22
+	]
+					;(swank.core/break)
+    (.translate title (+ box-x indent-x) (+ box-y indent-y))
+    (.translate body (+ box-x indent-x) (+ box-y indent-y line-height))
+    (.setPathToRectangle cbox
 			 box-x box-y
 			 box-width box-height)
-  (swank.core/break)			 
-    cr))
+    (.addChild cbox title)
+    (.addChild cbox body)
+    (swank.core/break)			 
+    cbox))
     
 (defn proto-card
     ""
