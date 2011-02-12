@@ -20,7 +20,13 @@
 ;
 ; v1.0: This is an early working version of a project to put one infocard
 ;   onscreen and enable the user to move it around on the Piccolo desktop.
-
+;
+;
+; NOTE: _underlines_ connote a variable that acts like a *constant*
+;   for this program but can be changed if needed by altering source code
+;
+; NO LONGER USING clj-piccolo2d LIBRARY 2/5/11 gw
+;
 
 (comment
   ; remember to execute (ns ... ) first
@@ -30,7 +36,7 @@
   (def canvas1 (.getCanvas frame1))
   (def layer1 (.getLayer canvas1))
 
-  ; NO LONGER USING clj-piccolo2d LIBRARY 2/5/11 gw
+  
   
   ;(def rect (rectangle 50 20 270 150))
   (def rect (PPath.))
@@ -45,17 +51,55 @@
 
 
 
-  (def clipping-rect (PClip.))
-  (def small2 (PText. "Woo! This text is much longer and will go outside box"))
-  (.translate small2 52 102)
-  (.setPathToRectangle clipping-rect 50 100 270 150)
-  (.setPaint clipping-rect (color 200 200 255 255))
-  (.addChild clipping-rect small2)
-  (.addChild layer1 clipping-rect)
+  (def cr (PClip.))
+  (.setVisible cr true)
+  (def tx (PText. "Woo! This text is much longer and will go outside box"))
+  (def t2 "Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Bye!")
+  (.translate tx 52 102)
+  (.setPathToRectangle cr 50 100 270 150)
+  (.setPaint cr (Color. 200 200 255 255))
+  (.addChild cr tx)
+  (.addChild layer1 cr)
 
-  (.removeChild layer1 clipping-rect) ;use to start over
+  (def wt2 (wrap t2 12 52 116 245))
+  (.addChild cr wt2)
+
+  (.removeChild layer1 cr) ;use to start over
   (.removeChild layer1 rect) ;use to start over
+  (.removeChild cr tx) ;use to start over
+  (.removeChild cr wt2) ;use to start over
 
+  ; experiment 1
+  (def cr (PClip.))
+  (def tx (PText. "Woo! This text is much longer and will go outside box"))
+  (.translate tx 52 102)
+  (.setPathToRectangle cr 50 100 270 150)
+  (.addChild cr tx)
+  (.addChild layer1 cr)
+
+;result: nothing happens as long as window is not selected; after it is,
+;there is a delay of approx 1 second, then cr appears with tx within it;
+;cr is at 50 100 relative to window, tx is in "right" place, at 52 102 relative to window
+  
+  (.removeChild layer1 cr) ;use to start over
+
+  ;result: cr disappears immediately, even though window is not active win.
+
+
+  ; experiment 2
+  (def cr (PClip.))
+  (def tx (PText. "Woo! This text is much longer and will go outside box"))
+  (.setPathToRectangle cr 50 100 270 150)
+  (.addChild cr tx)
+  (.addChild layer1 cr)
+
+;result: ditto above, except delay is about 6 seconds; weird
+  
+  (.translate tx 52 102)
+
+;result: nothing happens until window is selected, then tx appears after
+;about *10* seconds--yikes!; but tx is in the "wrong" place, at 52 102
+  ;relative to cr, not relative to window
   
   )
 
@@ -71,50 +115,46 @@
     (edu.umd.cs.piccolox   PFrame)
     (edu.umd.cs.piccolox.nodes   PClip)
     (java.awt.geom   Dimension2D Point2D)
-    (java.awt   BasicStroke Font GraphicsEnvironment Rectangle))
-  (:use clj-piccolo2d.core))
-
-; TO GET CLICKED CARD TO MOVE TO TOP, must (?) call .moveToFront
-; on card; requires creating a custom event handler that does
-; this, then calls PDragEventHandler.  gw 1/2/11
+    (java.awt   BasicStroke Color Font GraphicsEnvironment Rectangle))
+  ;(:use clj-piccolo2d.core)
+  )
 
 (declare txt)
 
 (defn wrap
-  "Return PText containing given text, font, font-size, x/y position,
+  "Return PText containing given text, font-size, x/y position,
  & width to wrap to"
   [text-str font-size x y wrap-width]
   ;
+  ; during debugging:
   ; text obj can't be remove!'d if you attempt to re-def it using
-  ; another wrap-text; you must remove! it, re-def it, then add! it again
+  ;  wrap again; you must remove! it, re-def it, then add! it again
   ;
   (prn "at start of wrap-text")
 ;  (swank.core/break)
-  (let [_font-name_ "Monospaced"
-	wrapped-text (text)  ;empty at first
+  
+  (let [_font-name_ "Monospaced" 
+	wrapped-text (PText.)  ;empty at first
 	height 0]   ;value used does not seem to matter
     (.setConstrainWidthToTextWidth wrapped-text false)
-    (set-text! wrapped-text text-str)
+    (.setText wrapped-text text-str)
     ;doesn't work unless *some* text exists
-    (set-font! wrapped-text _font-name_ :plain font-size)
+    (.setFont wrapped-text (Font. _font-name_ Font/PLAIN (Integer. font-size)))
     (.setBounds wrapped-text x y wrap-width height)
     wrapped-text))
 
 (defn clip-box
   ""
-  [box-x box-y box-width box-height ;position, size of box
-   r g b   a] ;red, green, blue, alpha values (all 0-255) for card bkgd color
-  (prn "text-box")
-  ;(swank.core/break)
-					
-  (let [clipping-rect (PClip.)]
+  [box-x box-y box-width box-height] ;position, size of box
+  (prn "clip-box")
+
+  (let [cr (PClip.)]
     ;(swank.core/break)
-    (.setPathToRectangle clipping-rect
+    (.setPathToRectangle cr
 			 box-x box-y
 			 box-width box-height)
-			 
-    (set-paint! clipping-rect r g b a)
-    clipping-rect))
+  (swank.core/break)			 
+    cr))
     
 (defn proto-card
     ""
@@ -124,7 +164,7 @@
     (let [_font-size_  12
 	  tenth      (/ _font-size_ 10.0)
 	  wrapped-body-text
-	    (wrap body-text "Monospaced"
+	    (wrap body-text _font-size_
 	]
     (.translate body-box 0 (- title-height 1))
     (add! title-box body-box)
