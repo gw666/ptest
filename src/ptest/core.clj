@@ -28,6 +28,106 @@
 ; NO LONGER USING clj-piccolo2d LIBRARY 2/5/11 gw
 ;
 
+(ns ptest.core
+  (:gen-class)
+  (:import (edu.umd.cs.piccolo PCanvas PNode PLayer)
+    (edu.umd.cs.piccolo.nodes   PPath PText)
+    (edu.umd.cs.piccolo.event   PBasicInputEventHandler PDragEventHandler
+      PDragSequenceEventHandler PInputEvent PInputEventFilter PPanEventHandler
+      PZoomEventHandler)
+    (edu.umd.cs.piccolo.util   PBounds)
+    (edu.umd.cs.piccolox   PFrame)
+    (edu.umd.cs.piccolox.nodes   PClip)
+    (java.awt.geom   Dimension2D Point2D)
+    (java.awt   BasicStroke Color Font GraphicsEnvironment Rectangle)))
+
+(defn wrap
+  "Return PText containing given text & width to wrap to"
+  [text-str wrap-width]
+  ;
+  ; during debugging:
+  ; text obj can't be remove!'d if you attempt to re-def it using
+  ;  wrap again; you must remove! it, re-def it, then add! it again
+  ;
+  (prn "at start of new wrap-text")
+;  (swank.core/break)
+  
+  (let [wrapped-text (PText.)]
+    (.setConstrainWidthToTextWidth wrapped-text false)
+    (.setText wrapped-text text-str)
+    (.setBounds wrapped-text 0 0 wrap-width 100)
+    wrapped-text))
+
+(defn infocard
+  "Create basic infocard (ready to be added as the child of a layer)"
+
+  ;NOTE: card is transparent, can't be moved 110211
+  [box-x box-y box-width box-height title-text body-text] ;position, size of box
+  (prn "reached infocard")
+
+  (let [cbox (PClip.)
+	title (PText. title-text)
+	indent-x 5
+	indent-y 4
+	body (wrap body-text (- box-width (quot indent-x 2)))
+	line-height 21
+	divider-height 22
+	end-x (+ box-x box-width)
+	line (PPath/createLine box-x (+ box-y divider-height)
+			       end-x (+ box-y divider-height))
+	backgd-color (Color. 250 250 250)
+	divider-color (Color. 255 100 100)
+	]
+    ;(swank.core/break)
+    (.translate title (+ box-x indent-x) (+ box-y indent-y))
+    (.translate body (+ box-x indent-x) (+ box-y indent-y line-height))
+    (.setPathToRectangle cbox
+			 box-x box-y
+			 box-width box-height)
+    (.setPaint cbox backgd-color)
+    (.setStrokePaint line divider-color)
+    (.addChild cbox title)
+    (.addChild cbox line)
+    (.addChild cbox body)
+    (.setChildrenPickable cbox false)
+    ;(swank.core/break)			 
+    cbox))
+
+(declare title-text)
+(declare body-text)
+
+  ;(:use clj-piccolo2d.core)
+  
+
+
+(defn testme [the-layer title-text body-text]
+  (def card (infocard 50 100 270 175 title-text body-text))
+  (def card2 (infocard 100 150 270 175 title-text body-text))
+  (.addChild the-layer card)
+  (.addChild the-layer card2))
+
+
+(defn -main []
+  (let [frame1 (PFrame.)
+	canvas1 (.getCanvas frame1)
+	title-text "\"Boof, boof, boof!\", says the dog! Boof, boof, boof!\", says the dog! Boof, boof, boof!\", says the dog!"
+	body-text  "Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Woo! This text is much longer and will go outside box. Bye!"
+	layer1 (.getLayer canvas1)
+	dragger (PDragEventHandler.)]
+    (prn "reached -main 1")
+    
+    (.setVisible frame1 true)
+    (.setMoveToFrontOnPress dragger true)
+
+    ;installs drag-PNode handler onto left-mouse button
+    (.setPanEventHandler canvas1 nil)
+    (.addInputEventListener canvas1 dragger)
+    ;(swank.core/break)
+    (testme layer1 title-text body-text)))
+
+
+;======================================================
+
 (comment
   ; remember to execute (ns ... ) first
   
@@ -125,116 +225,3 @@
   (.removeChild layer1 card)
   (.removeChild layer1 card2)
   )
-
-
-(ns ptest.core
-  (:gen-class)
-  (:import (edu.umd.cs.piccolo PCanvas PNode PLayer)
-    (edu.umd.cs.piccolo.nodes   PPath PText)
-    (edu.umd.cs.piccolo.event   PBasicInputEventHandler PDragEventHandler
-      PDragSequenceEventHandler PInputEvent PInputEventFilter PPanEventHandler
-      PZoomEventHandler)
-    (edu.umd.cs.piccolo.util   PBounds)
-    (edu.umd.cs.piccolox   PFrame)
-    (edu.umd.cs.piccolox.nodes   PClip)
-    (java.awt.geom   Dimension2D Point2D)
-    (java.awt   BasicStroke Color Font GraphicsEnvironment Rectangle))
-  ;(:use clj-piccolo2d.core)
-  )
-
-(declare txt)
-
-(defn wrap
-  "Return PText containing given text & width to wrap to"
-  [text-str wrap-width]
-  ;
-  ; during debugging:
-  ; text obj can't be remove!'d if you attempt to re-def it using
-  ;  wrap again; you must remove! it, re-def it, then add! it again
-  ;
-  (prn "at start of new wrap-text")
-;  (swank.core/break)
-  
-  (let [wrapped-text (PText.)]
-    (.setConstrainWidthToTextWidth wrapped-text false)
-    (.setText wrapped-text text-str)
-    (.setBounds wrapped-text 0 0 wrap-width 100)
-    wrapped-text))
-
-(defn infocard0
-  "Create basic infocard (ready to be added as the child of a layer)"
-  [box-x box-y box-width box-height title-text body-text] ;position, size of box
-  (prn "clip-box")
-
-  (let [cbox (PClip.)
-	title (PText. title-text)
-	indent-x 3
-	indent-y 3
-	body (wrap body-text box-width)
-	line-height 22
-	]
-					;(swank.core/break)
-    (.translate title (+ box-x indent-x) (+ box-y indent-y))
-    (.translate body (+ box-x indent-x) (+ box-y indent-y line-height))
-    (.setPathToRectangle cbox
-			 box-x box-y
-			 box-width box-height)
-    (.addChild cbox title)
-    (.addChild cbox body)
-    (swank.core/break)			 
-    cbox))
-    
-(defn proto-card
-    ""
-    [clipping-box title-text body-text]
-    ;a PClip representing entire card, text for title, body of card
-
-    (let [_font-size_  12
-	  tenth      (/ _font-size_ 10.0)
-	  wrapped-body-text
-	    (wrap body-text _font-size_
-	]
-    (.translate body-box 0 (- title-height 1))
-    (add! title-box body-box)
-    (.setChildrenPickable title-box false)
-    title-box
-    ))
-
-(defn test-card [the-PFrame box-x box-y box-width box-height font-size seconds text-str]
-  ;added text-str parameter (above)
-    (prn "test-card")
-  (let [card (proto-card	      
-	     "Calming the mind becomes necessary" text-str
-	     box-x box-y box-width box-height
-	     font-size)]
-    (prn "test-card")
-    ; replaced 'layer1' with 'the-PFrame'
-    (add! the-PFrame card)))
-
-
-
-(defn testme [layer1 txt]
-  (test-card layer1   0 0  270 124   12   10 txt)
-  (test-card layer1   200 200  270 124   12   10 txt)
-  )
-
-
-(defn -main []
-  (let [frame1 (PFrame.)
-	canvas1 (.getCanvas frame1)
-	txt  (str "We are at our least effective when we act in reaction to "
-		  "whatever was the most recent thought in our head. When the "
-		  "brain is very active, it spins from idea to idea with little "
-		  "sense of connection between the two. Calming the mind becomes "
-		  "necessary before we can hope to have any sense of mastery "
-		  "over how we spend our time.")
-	layer1 (.getLayer canvas1)
-	dragger (PDragEventHandler.)]
-    (.setVisible frame1 true)
-    (.setMoveToFrontOnPress dragger true)
-
-    ;installs drag-PNode handler onto left-mouse button
-    (.setPanEventHandler canvas1 nil)
-    (.addInputEventListener canvas1 dragger)
-    ;(swank.core/break)
-    (testme layer1 txt)))
